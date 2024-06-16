@@ -17,9 +17,10 @@ pub enum Error<ParseError: std::error::Error> {
 }
 
 pub fn load<Config, E: std::error::Error>(
-    parse: impl Fn(&[u8]) -> Result<Config, E> + Copy,
+    name: &str,
+    parse: impl Fn(&str) -> Result<Config, E> + Copy,
 ) -> Result<Config, Error<E>> {
-    if let Ok(path) = env::var("FFF_WUE_CMS_CONFIG") {
+    if let Ok(path) = env::var(format!("{}_CONFIG", name.to_uppercase())) {
         if let Some(path) = path_with_home_dir(&path) {
             match load_from_path(path, parse) {
                 Err(Error::Io(e)) if matches!(e.kind(), io::ErrorKind::NotFound) => {}
@@ -28,22 +29,14 @@ pub fn load<Config, E: std::error::Error>(
         }
     }
     let paths = [
-        concat!("~/.config/", env!("CARGO_CRATE_NAME"), "/config.toml"),
-        concat!("/etc/", env!("CARGO_CRATE_NAME"), "/config.toml"),
-        concat!("/usr/local/etc/", env!("CARGO_CRATE_NAME"), "/config.toml"),
-        concat!(
-            "~/Library/Preferences/",
-            env!("CARGO_CRATE_NAME"),
-            "/config.toml"
-        ),
-        concat!(
-            "/Library/Preferences/",
-            env!("CARGO_CRATE_NAME"),
-            "/config.toml"
-        ),
+        format!("~/.config/{name}/config.toml"),
+        format!("/etc/{name}/config.toml"),
+        format!("/usr/local/etc/{name}/config.toml"),
+        format!("~/Library/Preferences/{name}/config.toml"),
+        format!("/Library/Preferences/{name}/config.toml"),
     ];
     for path in paths {
-        if let Some(path) = path_with_home_dir(path) {
+        if let Some(path) = path_with_home_dir(&path) {
             match load_from_path(path, parse) {
                 Err(Error::Io(e)) if matches!(e.kind(), io::ErrorKind::NotFound) => {}
                 v => return v,
@@ -54,12 +47,12 @@ pub fn load<Config, E: std::error::Error>(
     Err(Error::NoPath)
 }
 
-pub fn load_from_path<Config, E: std::error::Error>(
+fn load_from_path<Config, E: std::error::Error>(
     path: impl AsRef<Path>,
-    parse: impl Fn(&[u8]) -> Result<Config, E>,
+    parse: impl Fn(&str) -> Result<Config, E>,
 ) -> Result<Config, Error<E>> {
     info!("Loading config from {}", path.as_ref().to_string_lossy());
-    parse(&fs::read(path)?).map_err(Error::Parse)
+    parse(&fs::read_to_string(path)?).map_err(Error::Parse)
 }
 
 fn path_with_home_dir(path: &str) -> Option<PathBuf> {
