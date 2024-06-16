@@ -1,3 +1,21 @@
+//! Load a config file by trying out default config file locations:
+//!
+//! - `{NAME_UPPERCASE}_CONFIG` envitonment variable
+//! - `~/.config/{name}/config.toml`
+//! - `/etc/{name}/config.toml`
+//! - `/usr/local/etc/{name}/config.toml`
+//! - `~/Library/Preferences/{name}/config.toml`
+//! - `/usr/local/etc/{name}/config.toml`
+//!
+//! ```no_run
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Debug, Deserialize, Serialize)]
+//! struct Config {}
+//!
+//! let config: Config = config_dirs::load("my-app", toml::from_str).expect("Failed to load config");
+//! ```
+
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
