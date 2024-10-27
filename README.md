@@ -2,7 +2,7 @@
 
 Load a config file by trying out default config file locations:
 
-- `{NAME_UPPERCASE}_CONFIG` envitonment variable
+- `{NAME_SCREAMING_SNAKE_CASE}_CONFIG` envitonment variable
 - `~/.config/{name}/config.toml`
 - `/etc/{name}/config.toml`
 - `/usr/local/etc/{name}/config.toml`
@@ -17,6 +17,8 @@ struct Config {}
 
 let config: Config = config_dirs::load("my-app", toml::from_str).expect("Failed to load config");
 ```
+
+The case conversion of `name` for the environment variable is done using [`convert_case::Case::ScreamingSnake`](https://docs.rs/convert_case/latest/convert_case/enum.Case.html#variant.ScreamingSnake).
 
 #### License
 

@@ -1,6 +1,6 @@
 [package]
 name = "config-dirs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Load a config file by trying out default config file locations"
@@ -8,7 +8,9 @@ repository = "https://github.com/nitn3lav/config-dirs-rs"
 keywords = ["config"]
 
 [dependencies]
+convert_case = "0.6.0"
 dirs = "5.0.1"
+genawaiter = "0.99.1"
 thiserror = "1.0.61"
 tracing = "0.1.40"
 

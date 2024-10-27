@@ -1,6 +1,6 @@
 //! Load a config file by trying out default config file locations:
 //!
-//! - `{NAME_UPPERCASE}_CONFIG` envitonment variable
+//! - `{NAME_SCREAMING_SNAKE_CASE}_CONFIG` envitonment variable
 //! - `~/.config/{name}/config.toml`
 //! - `/etc/{name}/config.toml`
 //! - `/usr/local/etc/{name}/config.toml`
@@ -21,6 +21,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use convert_case::{Case, Casing};
+use genawaiter::{stack::let_gen, yield_};
 use thiserror::Error;
 use tracing::{error, info};
 
@@ -38,7 +40,7 @@ pub fn load<Config, E: std::error::Error>(
     name: &str,
     parse: impl Fn(&str) -> Result<Config, E> + Copy,
 ) -> Result<Config, Error<E>> {
-    if let Ok(path) = env::var(format!("{}_CONFIG", name.to_uppercase())) {
+    if let Ok(path) = env::var(format!("{}_CONFIG", name.to_case(Case::ScreamingSnake))) {
         if let Some(path) = path_with_home_dir(&path) {
             match load_from_path(path, parse) {
                 Err(Error::Io(e)) if matches!(e.kind(), io::ErrorKind::NotFound) => {}
@@ -46,13 +48,13 @@ pub fn load<Config, E: std::error::Error>(
             }
         }
     }
-    let paths = [
-        format!("~/.config/{name}/config.toml"),
-        format!("/etc/{name}/config.toml"),
-        format!("/usr/local/etc/{name}/config.toml"),
-        format!("~/Library/Preferences/{name}/config.toml"),
-        format!("/Library/Preferences/{name}/config.toml"),
-    ];
+    let_gen!(paths, {
+        yield_!(format!("~/.config/{name}/config.toml"));
+        yield_!(format!("/etc/{name}/config.toml"));
+        yield_!(format!("/usr/local/etc/{name}/config.toml"));
+        yield_!(format!("~/Library/Preferences/{name}/config.toml"));
+        yield_!(format!("/Library/Preferences/{name}/config.toml"));
+    });
     for path in paths {
         if let Some(path) = path_with_home_dir(&path) {
             match load_from_path(path, parse) {
@@ -65,7 +67,7 @@ pub fn load<Config, E: std::error::Error>(
     Err(Error::NoPath)
 }
 
-fn load_from_path<Config, E: std::error::Error>(
+pub fn load_from_path<Config, E: std::error::Error>(
     path: impl AsRef<Path>,
     parse: impl Fn(&str) -> Result<Config, E>,
 ) -> Result<Config, Error<E>> {
